@@ -148,11 +148,15 @@ const consultaDocumentosPeloUsuario = async (usuarioId) => {
 
     console.time(`## Tempo de consulta de todos os documentos do usuário com o ID: ${usuarioId} MariaDB ##`)
     const usuariosDocumentos = await Usuario.findOne({
-        include: [Documento],
+        include: [{
+            model: Documento,
+            limit: 200000
+        }],
         where: {
             id: usuarioId
         }
     })
+
     console.timeEnd(`## Tempo de consulta de todos os documentos do usuário com o ID: ${usuarioId} MariaDB ##`)
     console.log(`### Quantidade de documentos consultados: ${usuariosDocumentos['Documentos'].length} ###`);
     console.log()

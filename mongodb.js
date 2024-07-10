@@ -86,6 +86,12 @@ const consultaDocumentosPeloUsuario = async (usuarioId) => {
                 foreignField: 'usuario',
                 as: 'documentos'
             }
+        },
+        {
+            $project: {
+                _id: 1,
+                documentos: { $slice: ['$documentos', 200000] } // Limita a quantidade de documentos retornados
+            }
         }
     ]);
     console.timeEnd(`## Tempo de consulta de todos os documentos do usuário com o ID: ${usuarioId} MongoDB ##`)

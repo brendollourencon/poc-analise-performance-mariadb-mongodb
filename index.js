@@ -24,13 +24,13 @@ const iniciarTestes = async () => {
     await popularBancoDeDados()
     console.log()
 
-    // console.log('# Consultando todos os dados #')
-    // await consultaTodosDocumentos()
-    // console.log()
-    //
-    // console.log('# Consultando todos os dados por id do usuário #')
-    // await consultaTodosDocumentosPorUsuario()
-    // console.log()
+    console.log('# Consultando todos os dados #')
+    await consultaTodosDocumentos()
+    console.log()
+
+    console.log('# Consultando todos os dados por id do usuário #')
+    await consultaTodosDocumentosPorUsuario()
+    console.log()
 
     process.exit()
 }
