@@ -1,0 +1,21 @@
+{
+  "name": "poc-analise-performance-mariadb-mongodb",
+  "version": "1.0.0",
+  "description": "POC para análise de performance entre MariaDB e MongoDB",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "criar-tabelas-colecoes": "node criar-tabelas-colecoes.js"
+  },
+  "keywords": [],
+  "author": "Brendol Lourençon",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "faker-br": "^0.4.1",
+    "mongodb": "^6.8.0",
+    "mongoose": "^8.4.4",
+    "mariadb": "^3.3.1",
+    "sequelize": "^6.37.3"
+  }
+}
