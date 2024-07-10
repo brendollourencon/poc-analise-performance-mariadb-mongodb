@@ -20,9 +20,9 @@ const consultaTodosDocumentosPorUsuario = async () => {
 }
 
 const iniciarTestes = async () => {
-    console.log('# Populando registros #')
-    await popularBancoDeDados()
-    console.log()
+    // console.log('# Populando registros #')
+    // await popularBancoDeDados()
+    // console.log()
 
     console.log('# Consultando todos os dados #')
     await consultaTodosDocumentos()
