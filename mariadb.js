@@ -80,77 +80,54 @@ const models = () => {
     }
 }
 const popularBanco = async (quantidadeRegistros, novosUsuarios) => {
-
     const Usuario = models().Usuario;
     const Documento = models().Documento;
-    const documentos = []
+
+    console.time('## Registros populados no MariaDB ##');
     let usuario1, usuario2, usuario3;
 
-    console.time('## Registros populados no MariaDB ##')
     if (novosUsuarios) {
-        [
-            usuario1,
-            usuario2,
-            usuario3
-        ] = await Promise.all([
-            (await Usuario.create({
+        [usuario1, usuario2, usuario3] = await Promise.all([
+            Usuario.create({
                 email: faker.internet.email().toLowerCase(),
                 nome: `${faker.name.firstName().toLowerCase()} ${faker.name.lastName().toLowerCase()}`
-            })).save(),
-            (await Usuario.create({
+            }),
+            Usuario.create({
                 email: faker.internet.email().toLowerCase(),
                 nome: `${faker.name.firstName().toLowerCase()} ${faker.name.lastName().toLowerCase()}`
-            })).save(),
-            (await Usuario.create({
+            }),
+            Usuario.create({
                 email: faker.internet.email().toLowerCase(),
                 nome: `${faker.name.firstName().toLowerCase()} ${faker.name.lastName().toLowerCase()}`
-            })).save()
-        ])
+            })
+        ]);
     } else {
-        [
-            usuario1,
-            usuario2,
-            usuario3
-        ] = await Promise.all([
-            Usuario.findOne({
-                where: {
-                    id: 1
-                }
-            }),
-            Usuario.findOne({
-                where: {
-                    id: 2
-                }
-            }),
-            Usuario.findOne({
-                where: {
-                    id: 3
-                }
-            }),
-        ])
+        [usuario1, usuario2, usuario3] = await Promise.all([
+            Usuario.findOne({ where: { id: 1 } }),
+            Usuario.findOne({ where: { id: 2 } }),
+            Usuario.findOne({ where: { id: 3 } })
+        ]);
     }
+
+    const documentos = [];
+    const tamanhoBloco = 1000;
+    const usuarios = [usuario1, usuario2, usuario3];
 
     for (let i = 0; i < quantidadeRegistros; i++) {
-        documentos.push({
-            usuario: usuario1.id,
-            cpf: faker.br.cpf()
+        usuarios.forEach(usuario => {
+            documentos.push({ usuario: usuario.id, cpf: faker.br.cpf() });
         });
-        documentos.push({
-            usuario: usuario2.id,
-            cpf: faker.br.cpf()
-        });
-        documentos.push({
-            usuario: usuario3.id,
-            cpf: faker.br.cpf()
-        });
+
+        if (documentos.length >= tamanhoBloco * usuarios.length || i === quantidadeRegistros - 1) {
+            await Documento.sequelize.transaction(async (transaction) => {
+                await Documento.bulkCreate(documentos, { transaction });
+            });
+            documentos.length = 0;
+        }
     }
 
-    await Documento.sequelize.transaction(async (t) => {
-        await Documento.bulkCreate(documentos, {transaction: t});
-    });
-
-    console.timeEnd('## Registros populados no MariaDB ##')
-}
+    console.timeEnd('## Registros populados no MariaDB ##');
+};
 
 const consultarTodosDocumentos = async () => {
     const Documento = models().Documento;
