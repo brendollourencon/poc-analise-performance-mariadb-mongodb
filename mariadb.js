@@ -79,57 +79,76 @@ const models = () => {
         Documento
     }
 }
+const popularBanco = async (quantidadeRegistros, novosUsuarios) => {
 
-const popularBanco = async (quantidadeRegistros) => {
     const Usuario = models().Usuario;
     const Documento = models().Documento;
-
-    const [
-        usuario1,
-        usuario2,
-        usuario3
-    ] = await Promise.all([
-        Usuario.create({
-            email: faker.internet.email().toLowerCase(),
-            nome: `${faker.name.firstName().toLowerCase()} ${faker.name.lastName().toLowerCase()}`
-        }),
-        Usuario.create({
-            email: faker.internet.email().toLowerCase(),
-            nome: `${faker.name.firstName().toLowerCase()} ${faker.name.lastName().toLowerCase()}`
-        }),
-        Usuario.create({
-            email: faker.internet.email().toLowerCase(),
-            nome: `${faker.name.firstName().toLowerCase()} ${faker.name.lastName().toLowerCase()}`
-        })
-    ])
+    const documentos = []
+    let usuario1, usuario2, usuario3;
 
     console.time('## Registros populados no MariaDB ##')
-    const [
-        dadosUsuario1,
-        dadosUsuario2,
-        dadosUsuario3
-    ] = await Promise.all([
-        usuario1.save(),
-        usuario2.save(),
-        usuario3.save(),
-    ])
-
-    for (let i = 0; i < quantidadeRegistros; i++) {
-        await Promise.all([
-            (await Documento.create({
-                usuario: dadosUsuario1.id,
-                cpf: faker.br.cpf()
+    if (novosUsuarios) {
+        [
+            usuario1,
+            usuario2,
+            usuario3
+        ] = await Promise.all([
+            (await Usuario.create({
+                email: faker.internet.email().toLowerCase(),
+                nome: `${faker.name.firstName().toLowerCase()} ${faker.name.lastName().toLowerCase()}`
             })).save(),
-            (await Documento.create({
-                usuario: dadosUsuario2.id,
-                cpf: faker.br.cpf()
+            (await Usuario.create({
+                email: faker.internet.email().toLowerCase(),
+                nome: `${faker.name.firstName().toLowerCase()} ${faker.name.lastName().toLowerCase()}`
             })).save(),
-            (await Documento.create({
-                usuario: dadosUsuario3.id,
-                cpf: faker.br.cpf()
-            })).save(),
+            (await Usuario.create({
+                email: faker.internet.email().toLowerCase(),
+                nome: `${faker.name.firstName().toLowerCase()} ${faker.name.lastName().toLowerCase()}`
+            })).save()
+        ])
+    } else {
+        [
+            usuario1,
+            usuario2,
+            usuario3
+        ] = await Promise.all([
+            Usuario.findOne({
+                where: {
+                    id: 1
+                }
+            }),
+            Usuario.findOne({
+                where: {
+                    id: 2
+                }
+            }),
+            Usuario.findOne({
+                where: {
+                    id: 3
+                }
+            }),
         ])
     }
+
+    for (let i = 0; i < quantidadeRegistros; i++) {
+        documentos.push({
+            usuario: usuario1.id,
+            cpf: faker.br.cpf()
+        });
+        documentos.push({
+            usuario: usuario2.id,
+            cpf: faker.br.cpf()
+        });
+        documentos.push({
+            usuario: usuario3.id,
+            cpf: faker.br.cpf()
+        });
+    }
+
+    await Documento.sequelize.transaction(async (t) => {
+        await Documento.bulkCreate(documentos, {transaction: t});
+    });
+
     console.timeEnd('## Registros populados no MariaDB ##')
 }
 

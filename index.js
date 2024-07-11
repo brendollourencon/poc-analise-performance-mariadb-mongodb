@@ -2,8 +2,8 @@ const testesMongoDB = require('./mongodb')
 const testesMariaDB = require('./mariadb')
 
 const popularBancoDeDados = async () => {
-    await testesMongoDB.popularBanco(100000);
-    await testesMariaDB.popularBanco(100000);
+    await testesMongoDB.popularBanco(100000, false);
+    await testesMariaDB.popularBanco(100000, false);
 }
 
 const consultaTodosDocumentos = async () => {
@@ -20,9 +20,9 @@ const consultaTodosDocumentosPorUsuario = async () => {
 }
 
 const iniciarTestes = async () => {
-    // console.log('# Populando registros #')
-    // await popularBancoDeDados()
-    // console.log()
+    console.log('# Populando registros #')
+    await popularBancoDeDados()
+    console.log()
 
     console.log('# Consultando todos os dados #')
     await consultaTodosDocumentos()

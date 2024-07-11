@@ -16,46 +16,57 @@ const Documento = mongoose.model('Documento', new Schema({
     cpf: {type: String, required: true, max: 255},
 }));
 
-const popularBanco = async (quantidadeRegistros) => {
+const popularBanco = async (quantidadeRegistros, novosUsuarios) => {
     await mongoose.connect(url)
 
-    const usuario1 = new Usuario({
-        email: faker.internet.email().toLowerCase(),
-        nome: `${faker.name.firstName().toLowerCase()} ${faker.name.lastName().toLowerCase()}`
-    })
-    const usuario2 = new Usuario({
-        email: faker.internet.email().toLowerCase(),
-        nome: `${faker.name.firstName().toLowerCase()} ${faker.name.lastName().toLowerCase()}`
-    })
-    const usuario3 = new Usuario({
-        email: faker.internet.email().toLowerCase(),
-        nome: `${faker.name.firstName().toLowerCase()} ${faker.name.lastName().toLowerCase()}`
-    })
+    const documentos = [];
+    let usuario1, usuario2, usuario3;
 
     console.time('## Registros populados no MongoDB ##')
-    await Promise.all([
-        usuario1.save(),
-        usuario2.save(),
-        usuario3.save(),
-    ])
+    if (novosUsuarios) {
+        usuario1 = new Usuario({
+            email: faker.internet.email().toLowerCase(),
+            nome: `${faker.name.firstName().toLowerCase()} ${faker.name.lastName().toLowerCase()}`
+        })
+        usuario2 = new Usuario({
+            email: faker.internet.email().toLowerCase(),
+            nome: `${faker.name.firstName().toLowerCase()} ${faker.name.lastName().toLowerCase()}`
+        })
+        usuario3 = new Usuario({
+            email: faker.internet.email().toLowerCase(),
+            nome: `${faker.name.firstName().toLowerCase()} ${faker.name.lastName().toLowerCase()}`
+        })
 
-    for (let i = 0; i < quantidadeRegistros; i++) {
         await Promise.all([
-            new Documento({
-                usuario: usuario1._id,
-                cpf: faker.br.cpf()
-            }).save(),
-            new Documento({
-                usuario: usuario2._id,
-                cpf: faker.br.cpf()
-            }).save(),
-            new Documento({
-                usuario: usuario3._id,
-                cpf: faker.br.cpf()
-            }).save()
+            usuario1.save(),
+            usuario2.save(),
+            usuario3.save(),
+        ])
+    } else {
+        [usuario1, usuario2, usuario3] = await Promise.all([
+            Usuario.findOne({_id: '668e96f9906903d03a5c4e93'}),
+            Usuario.findOne({_id: '668e96f9906903d03a5c4e94'}),
+            Usuario.findOne({_id: '668e96f9906903d03a5c4e95'}),
         ])
     }
 
+
+    for (let i = 0; i < quantidadeRegistros; i++) {
+        documentos.push(new Documento({
+            usuario: usuario1._id,
+            cpf: faker.br.cpf()
+        }));
+        documentos.push(new Documento({
+            usuario: usuario2._id,
+            cpf: faker.br.cpf()
+        }));
+        documentos.push(new Documento({
+            usuario: usuario3._id,
+            cpf: faker.br.cpf()
+        }));
+    }
+
+    await Documento.insertMany(documentos, {ordered: false, bypassDocumentValidation: true});
     console.timeEnd('## Registros populados no MongoDB ##')
 }
 
@@ -90,7 +101,7 @@ const consultaDocumentosPeloUsuario = async (usuarioId) => {
         {
             $project: {
                 _id: 1,
-                documentos: { $slice: ['$documentos', 200000] } // Limita a quantidade de documentos retornados
+                documentos: {$slice: ['$documentos', 200000]} // Limita a quantidade de documentos retornados
             }
         }
     ]);
