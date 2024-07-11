@@ -109,7 +109,7 @@ const popularBanco = async (quantidadeRegistros, novosUsuarios) => {
 
         for (let i = 0; i < quantidadeRegistros; i++) {
             usuarios.forEach(usuario => {
-                documentos.push({ usuarioId: usuario.id, cpf: faker.br.cpf() });
+                documentos.push({ usuario: usuario.id, cpf: faker.br.cpf() });
             });
 
             if (documentos.length >= tamanhoBloco * usuarios.length || i === quantidadeRegistros - 1) {
