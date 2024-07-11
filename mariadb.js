@@ -80,53 +80,50 @@ const models = () => {
     }
 }
 const popularBanco = async (quantidadeRegistros, novosUsuarios) => {
-    const Usuario = models().Usuario;
-    const Documento = models().Documento;
-
     console.time('## Registros populados no MariaDB ##');
-    let usuario1, usuario2, usuario3;
 
-    if (novosUsuarios) {
-        [usuario1, usuario2, usuario3] = await Promise.all([
-            Usuario.create({
-                email: faker.internet.email().toLowerCase(),
-                nome: `${faker.name.firstName().toLowerCase()} ${faker.name.lastName().toLowerCase()}`
-            }),
-            Usuario.create({
-                email: faker.internet.email().toLowerCase(),
-                nome: `${faker.name.firstName().toLowerCase()} ${faker.name.lastName().toLowerCase()}`
-            }),
-            Usuario.create({
-                email: faker.internet.email().toLowerCase(),
-                nome: `${faker.name.firstName().toLowerCase()} ${faker.name.lastName().toLowerCase()}`
-            })
-        ]);
-    } else {
-        [usuario1, usuario2, usuario3] = await Promise.all([
-            Usuario.findOne({ where: { id: 1 } }),
-            Usuario.findOne({ where: { id: 2 } }),
-            Usuario.findOne({ where: { id: 3 } })
-        ]);
-    }
+    try {
+        const { Usuario, Documento } = models()
+        let usuarios;
+        let documentos = [];
+        const tamanhoBloco = 1000;
 
-    const documentos = [];
-    const tamanhoBloco = 1000;
-    const usuarios = [usuario1, usuario2, usuario3];
-
-    for (let i = 0; i < quantidadeRegistros; i++) {
-        usuarios.forEach(usuario => {
-            documentos.push({ usuario: usuario.id, cpf: faker.br.cpf() });
-        });
-
-        if (documentos.length >= tamanhoBloco * usuarios.length || i === quantidadeRegistros - 1) {
-            await Documento.sequelize.transaction(async (transaction) => {
-                await Documento.bulkCreate(documentos, { transaction });
-            });
-            documentos.length = 0;
+        if (novosUsuarios) {
+            usuarios = await Usuario.bulkCreate([
+                {
+                    email: faker.internet.email().toLowerCase(),
+                    nome: `${faker.name.firstName().toLowerCase()} ${faker.name.lastName().toLowerCase()}`
+                },
+                {
+                    email: faker.internet.email().toLowerCase(),
+                    nome: `${faker.name.firstName().toLowerCase()} ${faker.name.lastName().toLowerCase()}`
+                },
+                {
+                    email: faker.internet.email().toLowerCase(),
+                    nome: `${faker.name.firstName().toLowerCase()} ${faker.name.lastName().toLowerCase()}`
+                }
+            ]);
+        } else {
+            usuarios = await Usuario.findAll({ limit: 3 });
         }
-    }
 
-    console.timeEnd('## Registros populados no MariaDB ##');
+        for (let i = 0; i < quantidadeRegistros; i++) {
+            usuarios.forEach(usuario => {
+                documentos.push({ usuarioId: usuario.id, cpf: faker.br.cpf() });
+            });
+
+            if (documentos.length >= tamanhoBloco * usuarios.length || i === quantidadeRegistros - 1) {
+                await sequelize.transaction(async (transaction) => {
+                    await Documento.bulkCreate(documentos, { transaction });
+                });
+                documentos = [];
+            }
+        }
+
+        console.timeEnd('## Registros populados no MariaDB ##');
+    } catch (erro) {
+        console.error(`## Erro ao popular banco MariaDB: ${ erro} ##`,);
+    }
 };
 
 const consultarTodosDocumentos = async () => {

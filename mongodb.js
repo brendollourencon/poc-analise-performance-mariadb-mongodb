@@ -16,51 +16,54 @@ const Documento = mongoose.model('Documento', new Schema({
     cpf: {type: String, required: true, max: 255},
 }));
 
+
+
 const popularBanco = async (quantidadeRegistros, novosUsuarios) => {
-    await mongoose.connect(url);
-
     console.time('## Registros populados no MongoDB ##');
-    let usuario1, usuario2, usuario3;
 
-    if (novosUsuarios) {
-        [usuario1, usuario2, usuario3] = await Promise.all([
-            new Usuario({
-                email: faker.internet.email().toLowerCase(),
-                nome: `${faker.name.firstName().toLowerCase()} ${faker.name.lastName().toLowerCase()}`
-            }).save(),
-            new Usuario({
-                email: faker.internet.email().toLowerCase(),
-                nome: `${faker.name.firstName().toLowerCase()} ${faker.name.lastName().toLowerCase()}`
-            }).save(),
-            new Usuario({
-                email: faker.internet.email().toLowerCase(),
-                nome: `${faker.name.firstName().toLowerCase()} ${faker.name.lastName().toLowerCase()}`
-            }).save()
-        ]);
-    } else {
-        [usuario1, usuario2, usuario3] = await Promise.all([
-            Usuario.findById('668e96f9906903d03a5c4e93'),
-            Usuario.findById('668e96f9906903d03a5c4e94'),
-            Usuario.findById('668e96f9906903d03a5c4e95')
-        ]);
-    }
+    try {
+        await mongoose.connect(url);
 
-    const documentos = [];
-    const tamanhoBloco = 1000;
-    const usuarios = [usuario1, usuario2, usuario3];
+        let usuarios;
+        let documentos = [];
+        const tamanhoBloco = 1000;
 
-    for (let i = 0; i < quantidadeRegistros; i++) {
-        usuarios.forEach(usuario => {
-            documentos.push({ usuario: usuario._id, cpf: faker.br.cpf() });
-        });
-
-        if (documentos.length >= tamanhoBloco * usuarios.length || i === quantidadeRegistros - 1) {
-            await Documento.insertMany(documentos, { ordered: false, bypassDocumentValidation: true });
-            documentos.length = 0;
+        if (novosUsuarios) {
+            usuarios = await Usuario.create([
+                {
+                    email: faker.internet.email().toLowerCase(),
+                    nome: `${faker.name.firstName().toLowerCase()} ${faker.name.lastName().toLowerCase()}`
+                },
+                {
+                    email: faker.internet.email().toLowerCase(),
+                    nome: `${faker.name.firstName().toLowerCase()} ${faker.name.lastName().toLowerCase()}`
+                },
+                {
+                    email: faker.internet.email().toLowerCase(),
+                    nome: `${faker.name.firstName().toLowerCase()} ${faker.name.lastName().toLowerCase()}`
+                }
+            ]);
+        } else {
+            usuarios = await Usuario.find({}).limit(3);
         }
-    }
 
-    console.timeEnd('## Registros populados no MongoDB ##');
+        for (let i = 0; i < quantidadeRegistros; i++) {
+            usuarios.forEach(usuario => {
+                documentos.push({ usuario: usuario._id, cpf: faker.br.cpf() });
+            });
+
+            if (documentos.length >= tamanhoBloco * usuarios.length || i === quantidadeRegistros - 1) {
+                await Documento.insertMany(documentos, { ordered: false, bypassDocumentValidation: true });
+                documentos = []
+            }
+        }
+
+        console.timeEnd('## Registros populados no MongoDB ##');
+    } catch (erro) {
+        console.error(` ## Erro ao popular banco MongoDB: ${erro} ##`);
+    } finally {
+        await mongoose.disconnect();
+    }
 };
 
 const consultarTodosDocumentos = async () => {
