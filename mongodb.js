@@ -70,40 +70,53 @@ const consultarTodosDocumentos = async () => {
     await mongoose.connect(url);
 
     console.time('## Tempo de consulta de todos os registros no MongoDB ##')
-    const documentos = await Documento.find();
+
+    let limite = 1000000;
+    let pagina = 1;
+    let todosDocumentos = [];
+    let existeMaisDocumentos = true;
+
+    try {
+        while (existeMaisDocumentos) {
+            const inicio = (pagina - 1) * limite;
+
+            const documentos = await Documento.find()
+                .skip(inicio)
+                .limit(limite);
+
+            if (documentos.length > 0) {
+                todosDocumentos = todosDocumentos.concat(documentos);
+                pagina++;
+                console.log(todosDocumentos.length);
+            } else {
+                existeMaisDocumentos = false;
+            }
+        }
+
+    } catch (error) {
+        console.error('Erro ao buscar documentos paginados:', error);
+        throw error;
+    }
+
     console.timeEnd('## Tempo de consulta de todos os registros no MongoDB ##')
-    console.log(`### Quantidade de registros consultados: ${documentos.length} ###`)
+    console.log(`### Quantidade de registros consultados: ${todosDocumentos.length} ###`)
     console.log()
 }
 
 const consultaDocumentosPeloUsuario = async (usuarioId) => {
-    await mongoose.connect(url)
+    await mongoose.connect(url);
+    console.time(`## Tempo de consulta de todos os documentos do usuário com o ID: ${usuarioId} MongoDB ##`);
+    const documentos = await Documento.find({ usuario: usuarioId }).populate('usuario').limit(3000000).lean();
+    console.timeEnd(`## Tempo de consulta de todos os documentos do usuário com o ID: ${usuarioId} MongoDB ##`);
+    console.log(`### Quantidade total de documentos consultados: ${documentos.length} ###`);
+}
 
-    console.time(`## Tempo de consulta de todos os documentos do usuário com o ID: ${usuarioId} MongoDB ##`)
-    const usuariosDocumentos = await Usuario.aggregate([
-        {
-            $match: {
-                _id: new mongoose.Types.ObjectId(usuarioId)
-            }
-        },
-        {
-            $lookup: {
-                from: 'documentos',
-                localField: '_id',
-                foreignField: 'usuario',
-                as: 'documentos'
-            }
-        },
-        {
-            $project: {
-                _id: 1,
-                documentos: {$slice: ['$documentos', 200000]} // Limita a quantidade de documentos retornados
-            }
-        }
-    ]);
-    console.timeEnd(`## Tempo de consulta de todos os documentos do usuário com o ID: ${usuarioId} MongoDB ##`)
-    console.log(`### Quantidade de documentos consultados: ${usuariosDocumentos[0].documentos.length} ###`);
-    console.log()
+const consultaDocumentosPeloIdUsuario = async (usuarioId) => {
+    await mongoose.connect(url);
+    console.time(`## Tempo de consulta de todos os documentos do usuário com o ID: ${usuarioId} MongoDB ##`);
+    const documentos = await Documento.find({ usuario: usuarioId }).limit(3000000).lean();
+    console.timeEnd(`## Tempo de consulta de todos os documentos do usuário com o ID: ${usuarioId} MongoDB ##`);
+    console.log(`### Quantidade total de documentos consultados: ${documentos.length} ###`);
 }
 
 const consultaPrimeiroUsuario = async () => {
@@ -115,5 +128,6 @@ module.exports = {
     popularBanco,
     consultarTodosDocumentos,
     consultaDocumentosPeloUsuario,
+    consultaDocumentosPeloIdUsuario,
     consultaPrimeiroUsuario
 }

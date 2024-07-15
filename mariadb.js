@@ -83,7 +83,7 @@ const popularBanco = async (quantidadeRegistros, novosUsuarios) => {
     console.time('## Registros populados no MariaDB ##');
 
     try {
-        const { Usuario, Documento } = models()
+        const {Usuario, Documento} = models()
         let usuarios;
         let documentos = [];
         const tamanhoBloco = 1000;
@@ -104,17 +104,17 @@ const popularBanco = async (quantidadeRegistros, novosUsuarios) => {
                 }
             ]);
         } else {
-            usuarios = await Usuario.findAll({ limit: 3 });
+            usuarios = await Usuario.findAll({limit: 3});
         }
 
         for (let i = 0; i < quantidadeRegistros; i++) {
             usuarios.forEach(usuario => {
-                documentos.push({ usuario: usuario.id, cpf: faker.br.cpf() });
+                documentos.push({usuario: usuario.id, cpf: faker.br.cpf()});
             });
 
             if (documentos.length >= tamanhoBloco * usuarios.length || i === quantidadeRegistros - 1) {
                 await sequelize.transaction(async (transaction) => {
-                    await Documento.bulkCreate(documentos, { transaction });
+                    await Documento.bulkCreate(documentos, {transaction});
                 });
                 documentos = [];
             }
@@ -122,16 +122,45 @@ const popularBanco = async (quantidadeRegistros, novosUsuarios) => {
 
         console.timeEnd('## Registros populados no MariaDB ##');
     } catch (erro) {
-        console.error(`## Erro ao popular banco MariaDB: ${ erro} ##`,);
+        console.error(`## Erro ao popular banco MariaDB: ${erro} ##`,);
     }
 };
 
 const consultarTodosDocumentos = async () => {
     const Documento = models().Documento;
     console.time('## Tempo de consulta de todos os registros no MariaDB ##')
-    const documentos = await Documento.findAll()
+
+    let limite = 1000000
+    let pagina = 1;
+    let existeMaisDocumentos = true;
+    let todosDocumentos = [];
+
+    try {
+        while (existeMaisDocumentos) {
+            const offset = (pagina - 1) * limite;
+
+            // Consulta paginada
+            const documentos = await Documento.findAll({
+                offset: offset,
+                limit: limite
+            });
+
+            if (documentos.length > 0) {
+                todosDocumentos = todosDocumentos.concat(documentos);
+                pagina++;
+            } else {
+                existeMaisDocumentos = false;
+            }
+        }
+
+        console.log('Todos os documentos foram processados.');
+    } catch (error) {
+        console.error('Erro ao processar documentos paginados:', error);
+        throw error;
+    }
+
     console.timeEnd('## Tempo de consulta de todos os registros no MariaDB ##')
-    console.log(`### Quantidade de registros consultados: ${documentos.length} ###`)
+    console.log(`### Quantidade de registros consultados: ${todosDocumentos.length} ###`)
     console.log()
 }
 
@@ -143,7 +172,7 @@ const consultaDocumentosPeloUsuario = async (usuarioId) => {
     const usuariosDocumentos = await Usuario.findOne({
         include: [{
             model: Documento,
-            limit: 200000
+            limit: 3000000
         }],
         where: {
             id: usuarioId
@@ -152,6 +181,20 @@ const consultaDocumentosPeloUsuario = async (usuarioId) => {
 
     console.timeEnd(`## Tempo de consulta de todos os documentos do usuário com o ID: ${usuarioId} MariaDB ##`)
     console.log(`### Quantidade de documentos consultados: ${usuariosDocumentos['Documentos'].length} ###`);
+    console.log()
+}
+
+const consultaDocumentosPeloIdUsuario = async (usuarioId) => {
+    const Documento = models().Documento;
+    console.time(`## Tempo de consulta de todos os documentos do usuário com o ID: ${usuarioId} MariaDB ##`)
+    const documentos = await Documento.findAll({
+        where: {
+            usuario: usuarioId
+        },
+        limit: 3000000
+    })
+    console.timeEnd(`## Tempo de consulta de todos os documentos do usuário com o ID: ${usuarioId} MariaDB ##`)
+    console.log(`### Quantidade de documentos consultados: ${documentos.length} ###`);
     console.log()
 }
 
@@ -164,5 +207,6 @@ module.exports = {
     popularBanco,
     consultarTodosDocumentos,
     consultaDocumentosPeloUsuario,
+    consultaDocumentosPeloIdUsuario,
     consultaPrimeiroUsuario
 }

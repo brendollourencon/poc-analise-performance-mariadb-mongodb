@@ -4,7 +4,7 @@
   "description": "POC para análise de performance entre MariaDB e MongoDB",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
+    "start": "node --max_old_space_size=99999 index.js",
     "criar-tabelas-colecoes": "node criar-tabelas-colecoes.js"
   },
   "keywords": [],

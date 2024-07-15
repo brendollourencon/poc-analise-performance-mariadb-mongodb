@@ -11,12 +11,20 @@ const consultaTodosDocumentos = async () => {
     await testesMariaDB.consultarTodosDocumentos();
 }
 
-const consultaTodosDocumentosPorUsuario = async () => {
+const consultaDocumentosPeloUsuario = async () => {
     const usuarioMongoDB = await testesMongoDB.consultaPrimeiroUsuario()
     const usuarioMariaDB = await testesMariaDB.consultaPrimeiroUsuario()
 
     await testesMongoDB.consultaDocumentosPeloUsuario(usuarioMongoDB._id.toString());
     await testesMariaDB.consultaDocumentosPeloUsuario(usuarioMariaDB.id)
+}
+
+const consultaDocumentosPeloIdUsuario = async () => {
+    const usuarioMongoDB = await testesMongoDB.consultaPrimeiroUsuario()
+    const usuarioMariaDB = await testesMariaDB.consultaPrimeiroUsuario()
+
+    await testesMongoDB.consultaDocumentosPeloIdUsuario(usuarioMongoDB._id.toString());
+    await testesMariaDB.consultaDocumentosPeloIdUsuario(usuarioMariaDB.id)
 }
 
 const iniciarTestes = async () => {
@@ -29,7 +37,11 @@ const iniciarTestes = async () => {
     console.log()
 
     console.log('# Consultando todos os dados por id do usuário #')
-    await consultaTodosDocumentosPorUsuario()
+    await consultaDocumentosPeloUsuario()
+    console.log()
+
+    console.log('# Consultando todos os dados por id do usuário #')
+    await consultaDocumentosPeloIdUsuario()
     console.log()
 
     process.exit()
